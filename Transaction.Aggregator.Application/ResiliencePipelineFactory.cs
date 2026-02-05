@@ -31,7 +31,15 @@ public class ResiliencePipelineFactory(IOptions<Settings> options) : IResilience
                 UseJitter = true,
                 MaxRetryAttempts = 2
             })
-            .AddTimeout(TimeSpan.FromSeconds(2));
+            .AddTimeout(TimeSpan.FromSeconds(2))
+            .AddCircuitBreaker(new()
+            {
+                ShouldHandle = new PredicateBuilder()
+                            .Handle<Exception>(),
+                BreakDuration = TimeSpan.FromSeconds(10),
+                FailureRatio = 0.5,
+                MinimumThroughput = 5,      
+            });
 
         if (enableChaos)
         {

@@ -2,7 +2,7 @@
 # Enterprise Transaction Aggregator
 
 The Enterprise Transaction Aggregator API provides a unified interface for aggregating transactions across multiple sources.
-It enables customers to retrieve categorized transactions through a queryable HTTP API.
+It enables customers to retrieve categorized transactions through a queryable HTTP API. This solution makes use of the clean architecture project structure with clear boundaries.
 
 
 ```bash
@@ -29,7 +29,7 @@ It enables customers to retrieve categorized transactions through a queryable HT
 ## Key features
 
 - Fan-out like data aggregation for transactions across multiple sources
-- Aggregation pipeline through service decoartion
+- Aggregation pipeline through service decoration
 - Resilient data aggregation
 - API rate limiting per IP
 - Partial failure management and best effort result sets ensure that a single source failure does not impact the final result set.
@@ -64,14 +64,31 @@ It enables customers to retrieve categorized transactions through a queryable HT
 
 ## Testing the solution
 
+- Refer to the [Transactions http file](./Transaction.Aggregator.Api/Transaction.Aggregator.Api.http)
+
+    or
+
+Using `Curl`
+
 - Get Transactions
 ```ps
     curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1"
 ```
 
-## Future enhancments
+- Pagination
 
-- Implement propagtaion of correlation id to downstream sources/services for end-to-end tracebility
-- Enable per source circuit breaker with persistence to manage circuit breaker state in a distribuited environment
+```ps
+       curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1?PageNumber=1&PageSize=5"
+```
+
+To execute unit tests
+
+```ps
+    dotnet test
+```
+## Future enhancements
+
+- Implement propagation of correlation id to downstream sources/services for end-to-end traceability
 - Rule Categorization with a persistence layer
-- Distrubuted rate limiting through a persistence layer. Alternatively Rate limiting should be a gateway concern and should instead be managed accordingly.
+- Distributed rate limiting through a persistence layer. Alternatively Rate limiting should be a gateway concern and should instead be managed accordingly.
+- Implement caching to minimize the amount calls to downstream services, especially for common requests.
