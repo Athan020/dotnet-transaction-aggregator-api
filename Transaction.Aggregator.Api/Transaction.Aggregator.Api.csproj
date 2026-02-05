@@ -8,10 +8,15 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.12.30" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../Transaction.Aggregator.Infrastructure/Transaction.Aggregator.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Middleware/" />
   </ItemGroup>
 
 </Project>

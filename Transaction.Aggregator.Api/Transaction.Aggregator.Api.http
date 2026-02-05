@@ -4,3 +4,27 @@ GET {{Transaction.Aggregator.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+
+GET {{Transaction.Aggregator.Api_HostAddress}}/transactionmanagement/v1/transactions/1
+Accept: application/json
+
+###
+
+GET {{Transaction.Aggregator.Api_HostAddress}}/transactionmanagement/v1/transactions/1?SourceName=prepaid
+Accept: application/json
+
+###
+
+GET {{Transaction.Aggregator.Api_HostAddress}}/transactionmanagement/v1/transactions/1?SourceName=card
+Accept: application/json
+
+###
+
+GET {{Transaction.Aggregator.Api_HostAddress}}/transactionmanagement/v1/transactions/1?SourceName=reward
+Accept: application/json
+
+###
+
+GET {{Transaction.Aggregator.Api_HostAddress}}/transactionmanagement/v1/transactions/1?PageNumber=1&PageSize=5
+Accept: application/json
