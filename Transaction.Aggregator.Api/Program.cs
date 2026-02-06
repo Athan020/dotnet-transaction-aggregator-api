@@ -9,32 +9,35 @@ using Transaction.Aggregator.Application.Contracts;
 using Transaction.Aggregator.Domain.Models;
 using Transaction.Aggregator.Infrastructure;
 using Transaction.Aggregator.Infrastructure.RuleEngine;
+using Transaction.Aggregator.Infrastructure.Sources;
 
 var builder = WebApplication.CreateBuilder(args);
 
 {
+    builder.Configuration.AddEnvironmentVariables();
     builder.Services
         .Configure<CategorizationRuleSet>(builder.Configuration.GetSection("CategorizationRules"));
     builder.Services.Configure<Settings>(builder.Configuration.GetSection("Toggles"));
 
+    builder.AddDistributedCache();
+
     // Add services to the container.
     builder.Services.AddSingleton<IResiliencePipelineFactory, ResiliencePipelineFactory>();
-    builder.Services.AddScoped<ITransactionManager, TransactionManager>();
-    builder.Services.AddScoped<ITransactionSource, RewardTransactionSource>();
-    builder.Services.AddScoped<ITransactionSource, PrepaidTransactionSource>();
-    builder.Services.AddScoped<ITransactionSource, CardTransactionSource>();
+    builder.Services.AddScoped<ITransactionManager,TransactionManager>();
+    builder.Services.AddScoped<ITransactionSource,RewardTransactionSource>();
+    builder.Services.AddScoped<ITransactionSource,PrepaidTransactionSource>();
+    builder.Services.AddScoped<ITransactionSource,CardTransactionSource>();
+
+    builder.Services.Decorate<ITransactionSource,ResilientTransactionSource>();
+    builder.Services.Decorate<ITransactionSource,CachedTransactionSource>();
+
+    
     builder.Services.AddScoped<ICategorizerEngine, CustomRuleCategorizer>();
 
-    builder.Services.AddScoped<TransactionAggregator>();
+    builder.Services.AddScoped<ITransactionAggregator,TransactionAggregator>();
 
 
-    builder.Services.AddScoped<ITransactionAggregator>(sp =>
-    {
-        var transactionAggregator = sp.GetRequiredService<TransactionAggregator>();
-        var logger = sp.GetRequiredService<ILogger<CategorizationAggregator>>();
-        var categorizerEngine = sp.GetRequiredService<ICategorizerEngine>();
-        return new CategorizationAggregator(transactionAggregator, categorizerEngine, logger);
-    });
+    builder.Services.Decorate<ITransactionAggregator,CategorizationAggregator>();
 
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
@@ -48,6 +51,7 @@ var builder = WebApplication.CreateBuilder(args);
     builder.AddOpenTelemetry();
     builder.AddCustomRateLimiting();
     builder.AddCustomHealthChecks();
+
 
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 

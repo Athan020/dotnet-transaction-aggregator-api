@@ -30,7 +30,7 @@ public class ResiliencePipelineFactory(IOptions<Settings> options) : IResilience
                 UseJitter = true,
                 MaxRetryAttempts = 2
             })
-            .AddTimeout(TimeSpan.FromSeconds(2))
+            .AddTimeout(TimeSpan.FromSeconds(4))
             .AddCircuitBreaker(new()
             {
                 ShouldHandle = new PredicateBuilder()
@@ -43,7 +43,7 @@ public class ResiliencePipelineFactory(IOptions<Settings> options) : IResilience
         if (_settings.EnableChaos)
         {
             builder
-                .AddChaosLatency(0.3, TimeSpan.FromSeconds(4));
+                .AddChaosLatency(0.3, TimeSpan.FromSeconds(5));
         }
 
 

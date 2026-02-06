@@ -9,6 +9,7 @@ COPY Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj ./Transaction.
 COPY Transaction.Aggregator.Application/Transaction.Aggregator.Application.csproj ./Transaction.Aggregator.Application/
 COPY Transaction.Aggregator.Domain/Transaction.Aggregator.Domain.csproj ./Transaction.Aggregator.Domain/
 COPY Transaction.Aggregator.Infrastructure/Transaction.Aggregator.Infrastructure.csproj ./Transaction.Aggregator.Infrastructure/
+COPY Transaction.Aggregator.Tests/Transaction.Aggregator.Tests.csproj ./Transaction.Aggregator.Tests/
 RUN dotnet restore 
 
 COPY . .

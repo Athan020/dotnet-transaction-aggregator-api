@@ -29,38 +29,65 @@ It enables customers to retrieve categorized transactions through a queryable HT
 ## Key features
 
 - Fan-out like data aggregation for transactions across multiple sources
+- Per transaction source caching
+- Fail safe mechanism 
+- Global Exception handling
 - Aggregation pipeline through service decoration
-- Resilient data aggregation
+- Resilient data aggregation through service decoration
 - API rate limiting per IP
 - Partial failure management and best effort result sets ensure that a single source failure does not impact the final result set.
 - Configurable Json based rule Categorization
 - Shared interface for aggregation logic makes it easy to introduce additional sources
 - Chaos simulation with Polly to simulate downstream latency (For development purposes)
 
+```
+    ┌─────────────────────────────┐
+    │ Transactions Controller     │
+    └────────────┬────────────────┘
+                 │
+    ┌────────────▼─────────────────┐
+    │ Categorization Engine        │
+    └────────────┬─────────────────┘
+                 │
+    ┌────────────▼──────────────────────┐
+    │ Transaction Aggregator            │
+    └────────────┬──────────────────────┘
+                 │
+    ┌────────────▼─────────────────┐
+    │ Hybrid Cache (L1/L2)         │
+    └────────────┬─────────────────┘
+                 │
+    ┌────────────▼──────────────────────┐
+    │ Resilience Pipeline               │
+    │ (Retry, Timeout, Circuit Breaker) │
+    └────────────┬──────────────────────┘
+                 │
+         _________┴________
+        │                 │
+    ┌───▼────────┐  ┌─────▼────────┐
+    │ Source 1   │  │ Source 2     │
+    │ (Card)     │  │ (Prepaid)    │
+    └────────────┘  └──────────────┘
+```
+
+
 
 ## Building the solution
 
-- Dotnet cli
-    ```ps
-        dotnet build
-    ```
-- Docker cli
-    
-    ```ps
-        doccker build . -t transaction.aggregator:dev
-    ```
+```ps
+    docker-compose build
+```
 ## Running the solution
 
-- Running the API via the dotnet cli
-    - Explicitly run the API project
-    ```ps
-        dotnet run --project Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj  
-    ``` 
-- Running the API via docker desktop cli
-    - Run your local image
-    ```ps
-        docker run --rm -p 5050:5000 transaction.aggregator:dev
-    ```
+```ps
+    docker-compose up -d           
+```
+
+Teardown
+
+```ps
+    docker-compose down
+```
 
 ## Testing the solution
 
