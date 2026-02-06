@@ -1,9 +1,10 @@
 using System;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Polly;
 using Transaction.Aggregator.Application;
+using Transaction.Aggregator.Application.Contracts;
 using Transaction.Aggregator.Domain.Models;
+using Transaction.Aggregator.Infrastructure.Sources;
 using Transaction.Aggregator.Tests.Fixtures;
 
 namespace Transaction.Aggregator.Tests.Application;
@@ -19,10 +20,7 @@ public class TransactionAggregatorTests
         var source2 = FakeTransactionSource.Create("source2", [TransactionFixtures.Grocery()]);
         var source3 = FakeTransactionSource.Create("source3", [TransactionFixtures.OnlineSubscription()]);
 
-        Mock<IResiliencePipelineFactory> resiliencePipelineFactoryMock = new();
-        resiliencePipelineFactoryMock.Setup(f => f.GetOrCreatePipeline(It.IsAny<string>())).Returns(ResiliencePipeline.Empty);
-
-        var transactionAggregator = new TransactionAggregator(new[] { source1, source2, source3 }, resiliencePipelineFactoryMock.Object, NullLogger<TransactionAggregator>.Instance);
+        var transactionAggregator = new TransactionAggregator(new[] { source1, source2, source3 }, NullLogger<TransactionAggregator>.Instance);
 
         // Act
         var transactions = await transactionAggregator.AggregateTransactionsAsync(new TransactionQuery(), CancellationToken.None);
@@ -30,7 +28,6 @@ public class TransactionAggregatorTests
         // Assert
         Assert.NotNull(transactions);
         Assert.Equal(3, transactions?.Count);
-        resiliencePipelineFactoryMock.Verify(f => f.GetOrCreatePipeline(It.IsAny<string>()), Times.Exactly(3));
     }
 
     [Fact]
@@ -41,10 +38,7 @@ public class TransactionAggregatorTests
         var source2 = FakeTransactionSource.Create("source2", new Exception("Source failure"));
         var source3 = FakeTransactionSource.Create("source3", [TransactionFixtures.OnlineSubscription()]);
 
-        Mock<IResiliencePipelineFactory> resiliencePipelineFactoryMock = new();
-        resiliencePipelineFactoryMock.Setup(f => f.GetOrCreatePipeline(It.IsAny<string>())).Returns(ResiliencePipeline.Empty);
-
-        var transactionAggregator = new TransactionAggregator(new[] { source1, source2, source3 }, resiliencePipelineFactoryMock.Object, NullLogger<TransactionAggregator>.Instance);
+        var transactionAggregator = new TransactionAggregator(new[] { source1, source2, source3 }, NullLogger<TransactionAggregator>.Instance);
 
         // Act
         var transactions = await transactionAggregator.AggregateTransactionsAsync(new TransactionQuery(), CancellationToken.None);
@@ -53,7 +47,6 @@ public class TransactionAggregatorTests
         Assert.NotNull(transactions);
         Assert.Equal(2, transactions?.Count);
         Assert.DoesNotContain(transactions!, t => t.Source == "source2");
-        resiliencePipelineFactoryMock.Verify(f => f.GetOrCreatePipeline(It.IsAny<string>()), Times.Exactly(3));
     }
 
     [Fact]
@@ -64,10 +57,15 @@ public class TransactionAggregatorTests
         var source2 = FakeTransactionSource.Create("source2", new Exception("Source failure"));
         var source3 = FakeTransactionSource.Create("source3", new Exception("Source failure"));
 
-        Mock<IResiliencePipelineFactory> resiliencePipelineFactoryMock = new();
-        resiliencePipelineFactoryMock.Setup(f => f.GetOrCreatePipeline(It.IsAny<string>())).Returns(ResiliencePipeline.Empty);
+        Mock<IResiliencePipelineFactory> mockResilienceFactory = new();
 
-        var transactionAggregator = new TransactionAggregator(new[] { source1, source2, source3 }, resiliencePipelineFactoryMock.Object, NullLogger<TransactionAggregator>.Instance);
+        mockResilienceFactory.Setup(m => m.GetOrCreatePipeline(It.IsAny<string>())).Returns(Polly.ResiliencePipeline.Empty);
+
+        var resilientSource1 = new ResilientTransactionSource(source1, mockResilienceFactory.Object);
+        var resilientSource2 = new ResilientTransactionSource(source2, mockResilienceFactory.Object);
+        var resilientSource3 = new ResilientTransactionSource(source3, mockResilienceFactory.Object);
+
+        var transactionAggregator = new TransactionAggregator(new[] { resilientSource1, resilientSource2, resilientSource3 }, NullLogger<TransactionAggregator>.Instance);
 
         // Act
         var transactions = await transactionAggregator.AggregateTransactionsAsync(new TransactionQuery(), CancellationToken.None);
@@ -75,7 +73,6 @@ public class TransactionAggregatorTests
         // Assert
         Assert.NotNull(transactions);
         Assert.Empty(transactions!);
-        resiliencePipelineFactoryMock.Verify(f => f.GetOrCreatePipeline(It.IsAny<string>()), Times.Exactly(3));
     }
 
     [Fact]
@@ -85,10 +82,7 @@ public class TransactionAggregatorTests
         var transaction = TransactionFixtures.Salary();
         var source1 = FakeTransactionSource.Create("source1", [transaction, transaction]);
 
-        Mock<IResiliencePipelineFactory> resiliencePipelineFactoryMock = new();
-        resiliencePipelineFactoryMock.Setup(f => f.GetOrCreatePipeline(It.IsAny<string>())).Returns(ResiliencePipeline.Empty);
-
-        var transactionAggregator = new TransactionAggregator(new[] { source1 }, resiliencePipelineFactoryMock.Object, NullLogger<TransactionAggregator>.Instance);
+        var transactionAggregator = new TransactionAggregator(new[] { source1 }, NullLogger<TransactionAggregator>.Instance);
 
         // Act
         var transactions = await transactionAggregator.AggregateTransactionsAsync(new TransactionQuery(), CancellationToken.None);
@@ -96,7 +90,6 @@ public class TransactionAggregatorTests
         // Assert
         Assert.NotNull(transactions);
         Assert.Single(transactions!);
-        resiliencePipelineFactoryMock.Verify(f => f.GetOrCreatePipeline(It.IsAny<string>()), Times.Once);
     }
 
 }

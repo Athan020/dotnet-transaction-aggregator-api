@@ -15,13 +15,32 @@ public sealed class TransactionAggregator(IEnumerable<ITransactionSource> transa
 
         var transactionSourcesTasks = _transactionSources
             .Where(source => query.SourceName == null || source.SourceName.Equals(query.SourceName, StringComparison.OrdinalIgnoreCase))
-            .Select(source => source.GetTransactionsAsync(query,cancellationToken).AsTask())
+            .Select(source => GetTransactionsSafely(query,source,cancellationToken))
             .ToArray();
 
         var results = await Task.WhenAll(transactionSourcesTasks);
 
         return [.. results
-                    .SelectMany(tx => tx.Value!)
+                    .SelectMany(tx => tx)
                     .DistinctBy(t => new { t.Id, t.Source })];
+    }
+
+    private async Task<TransactionItem[]> GetTransactionsSafely(TransactionQuery query, ITransactionSource transactionSource, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await transactionSource.GetTransactionsAsync(query, cancellationToken);
+
+            if(result.IsSuccess)
+            {
+                return result.Value!;
+            }
+        }catch(Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred whilst retrieving transactions from {SourceName} Source", transactionSource.SourceName);
+
+        }
+
+        return [];
     }
 }

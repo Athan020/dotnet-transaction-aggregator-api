@@ -99,13 +99,13 @@ Using `Curl`
 
 - Get Transactions
 ```ps
-    curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1" -s | jq
+    curl -X GET "http://localhost:5050/transactionmanagement/v1/transactions/1" -s | jq
 ```
 
 - Pagination
 
 ```ps
-    curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1?PageNumber=1&PageSize=5" -s | jq
+    curl -X GET "http://localhost:5050/transactionmanagement/v1/transactions/1?PageNumber=1&PageSize=5" -s | jq
 ```
 
 To execute unit tests
@@ -118,4 +118,5 @@ To execute unit tests
 - Implement propagation of correlation id to downstream sources/services for end-to-end traceability
 - Rule Categorization with a persistence layer
 - Distributed rate limiting through a persistence layer. Alternatively Rate limiting should be a gateway concern and should instead be managed accordingly.
-- Implement caching to minimize the amount calls to downstream services, especially for common requests.
+- Persistence of circuit breaker state to allow for distributed circuit breakers
+- Implement back plane to ensure distributed fallback cache mechanism behaves the same across all instances 

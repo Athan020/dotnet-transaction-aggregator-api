@@ -10,6 +10,7 @@ public static class HealthCheckExtensions
     {
         builder.Services
             .AddHealthChecks()
+            .AddRedis(builder.Configuration.GetConnectionString("Redis")!)
             .AddCheck("self", () => HealthCheckResult.Healthy("API is Available"),
                 tags: ["ready"]);
 
