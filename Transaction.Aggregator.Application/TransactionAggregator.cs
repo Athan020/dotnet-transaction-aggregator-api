@@ -23,7 +23,8 @@ public sealed class TransactionAggregator(IEnumerable<ITransactionSource> transa
 
         return [.. results
                     .SelectMany(tx => tx)
-                    .DistinctBy(t => new { t.Id, t.Source })];
+                    .DistinctBy(t => new { t.Id, t.Source })
+                    .DistinctBy(t => new { t.Date, t.Description, t.Amount, t.FromAccountId, t.Source })];
     }
 
     private async Task<TransactionItem[]> CollectTransactionFromSourceSafelyAsync(TransactionQuery query, ITransactionSource source, CancellationToken cancellationToken)

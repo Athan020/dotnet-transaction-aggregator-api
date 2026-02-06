@@ -2,4 +2,7 @@ using System;
 
 namespace Transaction.Aggregator.Application.Configuration;
 
-public class Settings: Dictionary<string, bool>;
+public class Settings
+{
+    public bool EnableChaos { get; set; }
+}

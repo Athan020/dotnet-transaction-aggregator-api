@@ -1,7 +1,7 @@
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
+using Transaction.Aggregator.Api.Extensions;
 using Transaction.Aggregator.Api.Middleware;
 using Transaction.Aggregator.Application;
 using Transaction.Aggregator.Application.Configuration;
@@ -36,44 +36,22 @@ var builder = WebApplication.CreateBuilder(args);
         return new CategorizationAggregator(transactionAggregator, categorizerEngine, logger);
     });
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;;
+        });
+    
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 
-    builder.Services.AddRateLimiter(options =>
-    {
-        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    builder.AddOpenTelemetry();
+    builder.AddCustomRateLimiting();
+    builder.AddCustomHealthChecks();
 
-        options.OnRejected = async (context, cancellationToken) =>
-        {
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-            if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            {
-                context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
-
-                var problemdetailsFactory = context.HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-
-                var problemDetails = problemdetailsFactory.CreateProblemDetails(
-                    context.HttpContext,
-                    statusCode: StatusCodes.Status429TooManyRequests,
-                    title: "Too Many Requests",
-                    detail: $"You have exceeded the allowed request limit. Please try again in {retryAfter.TotalSeconds:N0} seconds."
-                );
-
-                await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-            }
-        };
-
-        options.AddPolicy("Fixed", context =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: context.Connection.RemoteIpAddress?.ToString(), factory: _ =>
-                new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = 50,
-                    Window = TimeSpan.FromMinutes(1),
-                }));
-    });
-
+    builder.Services.AddProblemDetails();
 }
 
 var app = builder.Build();
@@ -91,11 +69,17 @@ var app = builder.Build();
 
         });
     }
-
+    
     app.UseMiddleware<CorrelationMiddleware>();
     app.UseRateLimiter();
+    app.UseExceptionHandler();
 
     app.MapControllers();
+
+    app.MapHealthChecks("/health", new HealthCheckOptions
+    {
+        Predicate = _ => true,
+    });
 }
 
 await app.RunAsync();

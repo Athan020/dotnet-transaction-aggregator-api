@@ -9,7 +9,7 @@ public record class TransactionItem
 
     public decimal? Amount { get; set; }
 
-    public string FromAccountId { get; set; }= null!;
+    public long? FromAccountId { get; set; }
 
     public DateTime Date { get; set; }
 

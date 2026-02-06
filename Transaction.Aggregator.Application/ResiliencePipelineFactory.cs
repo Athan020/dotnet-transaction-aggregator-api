@@ -20,7 +20,6 @@ public class ResiliencePipelineFactory(IOptions<Settings> options) : IResilience
     }
     private ResiliencePipeline Create(string source)
     {
-        _settings.TryGetValue("EnableChaos", out var enableChaos);
 
         var builder = new ResiliencePipelineBuilder()
             .AddRetry(new()
@@ -41,7 +40,7 @@ public class ResiliencePipelineFactory(IOptions<Settings> options) : IResilience
                 MinimumThroughput = 5,      
             });
 
-        if (enableChaos)
+        if (_settings.EnableChaos)
         {
             builder
                 .AddChaosLatency(0.3, TimeSpan.FromSeconds(4));
@@ -50,9 +49,4 @@ public class ResiliencePipelineFactory(IOptions<Settings> options) : IResilience
 
         return builder.Build();
     }
-}
-
-public interface IResiliencePipelineFactory
-{
-    ResiliencePipeline GetOrCreatePipeline(string source);
 }

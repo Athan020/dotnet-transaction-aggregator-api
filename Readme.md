@@ -72,13 +72,13 @@ Using `Curl`
 
 - Get Transactions
 ```ps
-    curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1"
+    curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1" -s | jq
 ```
 
 - Pagination
 
 ```ps
-       curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1?PageNumber=1&PageSize=5"
+    curl -X GET "http://localhost:5027/transactionmanagement/v1/transactions/1?PageNumber=1&PageSize=5" -s | jq
 ```
 
 To execute unit tests

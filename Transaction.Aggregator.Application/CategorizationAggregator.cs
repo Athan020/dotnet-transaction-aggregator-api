@@ -18,7 +18,7 @@ public sealed class CategorizationAggregator(ITransactionAggregator transactionA
 
 
         var transactions = await _transactionAggregator.AggregateTransactionsAsync(query, cancellationToken);
-
+        
         foreach (var transaction in transactions ?? [])
         {
             transaction.Category = await _categorizerEngine.CategorizeTransactionAsync(transaction.Description, cancellationToken) ?? "Uncategorized";
