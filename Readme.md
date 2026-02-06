@@ -36,7 +36,7 @@ It enables customers to retrieve categorized transactions through a queryable HT
 - Resilient data aggregation through service decoration
 - API rate limiting per IP
 - Partial failure management and best effort result sets ensure that a single source failure does not impact the final result set.
-- Configurable Json based rule Categorization
+- Configurable Json based rule categorization
 - Shared interface for aggregation logic makes it easy to introduce additional sources
 - Chaos simulation with Polly to simulate downstream latency (For development purposes)
 
