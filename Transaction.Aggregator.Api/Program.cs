@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Prometheus;
 using Scalar.AspNetCore;
 using Transaction.Aggregator.Api.Extensions;
 using Transaction.Aggregator.Api.Middleware;
@@ -24,18 +25,40 @@ var builder = WebApplication.CreateBuilder(args);
     // Add services to the container.
     builder.Services.AddSingleton<IResiliencePipelineFactory, ResiliencePipelineFactory>();
     builder.Services.AddScoped<ITransactionManager,TransactionManager>();
-    builder.Services.AddScoped<ITransactionSource,RewardTransactionSource>();
-    builder.Services.AddScoped<ITransactionSource,PrepaidTransactionSource>();
-    builder.Services.AddScoped<ITransactionSource,CardTransactionSource>();
+    
+    // Single PostgreSQL source (synced from Kafka)
+    builder.Services.AddScoped<ITransactionSource>(sp => 
+        new PostgresTransactionSource(
+            builder.Configuration.GetConnectionString("Postgres") 
+            ?? throw new InvalidOperationException("PostgreSQL connection string not configured")
+        )
+    );
 
     builder.Services.Decorate<ITransactionSource,ResilientTransactionSource>();
     builder.Services.Decorate<ITransactionSource,CachedTransactionSource>();
 
     
-    builder.Services.AddScoped<ICategorizerEngine, CustomRuleCategorizer>();
+    // categorization engine selection (configures either the simple JSON rules or
+    // the database-backed engine).  default is JSON-based for backwards
+    // compatibility, but the flag can be flipped in settings.
+    var useDbEngine = builder.Configuration.GetValue<bool>("UseDatabaseCategorizer");
+    if (useDbEngine)
+    {
+        builder.Services.AddScoped<ICategorizationRuleRepository>(sp =>
+            new PostgresCategorizationRuleRepository(
+                builder.Configuration.GetConnectionString("Postgres")
+                    ?? throw new InvalidOperationException("PostgreSQL connection string not configured")
+            )
+        );
+
+        builder.Services.AddScoped<ICategorizerEngine, DatabaseCategorizer>();
+    }
+    else
+    {
+        builder.Services.AddScoped<ICategorizerEngine, CustomRuleCategorizer>();
+    }
 
     builder.Services.AddScoped<ITransactionAggregator,TransactionAggregator>();
-
 
     builder.Services.Decorate<ITransactionAggregator,CategorizationAggregator>();
 
@@ -84,6 +107,9 @@ var app = builder.Build();
     {
         Predicate = _ => true,
     });
+
+    // Prometheus metrics endpoint (provided by prometheus-net)
+    app.MapMetrics();
 }
 
 await app.RunAsync();

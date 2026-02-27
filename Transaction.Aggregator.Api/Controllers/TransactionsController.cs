@@ -16,15 +16,13 @@ namespace Transaction.Aggregator.Api.Controllers
     {
         private readonly ITransactionManager _transactionAggregator = transactionAggregator;
 
-        [HttpGet("{accountId:long}")]
+        [HttpGet]
         [ProducesResponseType<PaginatedResult<TransactionItem>>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetTransactionsAsync(long accountId, [FromQuery] TransactionQueryDto query, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetTransactionsAsync([FromQuery] TransactionQueryDto query, CancellationToken cancellationToken)
         {
             var queryModel = query.ToTransactionQueryDomainModel();
-
-            queryModel = queryModel with { AccountId = accountId };
 
             var transactions = await _transactionAggregator.GetTransactionsAsync(queryModel, cancellationToken);
 

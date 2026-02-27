@@ -1,4 +1,5 @@
 using System;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -12,25 +13,63 @@ public static class OpenTelemetryExtensions
     public static TBuilder AddOpenTelemetry<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
+        var jaegerEndpoint = builder.Configuration.GetValue<string>("OpenTelemetry:JaegerEndpoint") 
+            ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") 
+            ?? "http://localhost:4318";
+        
+        var prometheusPort = builder.Configuration.GetValue<int?>("OpenTelemetry:PrometheusPort") ?? 9090;
 
+        // Logging
         builder.Logging.AddOpenTelemetry(options =>
         {
             options
-                .AddConsoleExporter();
+                .SetResourceBuilder(CreateResourceBuilder(builder.Environment))
+                .AddOtlpExporter(otlpOptions =>
+                {
+                    otlpOptions.Endpoint = new Uri(jaegerEndpoint);
+                });
 
             options.IncludeFormattedMessage = true;
             options.IncludeScopes = true;
-
-            options.SetResourceBuilder(CreateResourceBuilder(builder.Environment));
         });
 
+        // Tracing
         builder.Services.AddOpenTelemetry()
-            .WithMetrics(options =>
+            .WithTracing(tracing =>
             {
-                options
+                tracing
+                    .SetResourceBuilder(CreateResourceBuilder(builder.Environment))
+                    .AddAspNetCoreInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                        options.EnrichWithHttpRequest = (activity, request) =>
+                        {
+                            activity.SetTag("request.headers.user-agent", request.Headers.UserAgent);
+                        };
+                        options.EnrichWithHttpResponse = (activity, response) =>
+                        {
+                            activity.SetTag("response.content-type", response.ContentType);
+                        };
+                    })
+                    .AddHttpClientInstrumentation(options =>
+                    {
+                        options.RecordException = true;
+                    })
+                    .AddOtlpExporter(otlpOptions =>
+                    {
+                        otlpOptions.Endpoint = new Uri(jaegerEndpoint);
+                    });
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
                     .SetResourceBuilder(CreateResourceBuilder(builder.Environment))
                     .AddAspNetCoreInstrumentation()
-                    .AddConsoleExporter();
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    // .AddProcessInstrumentation()
+                    .AddMeter("TransactionAggregatorApi");
+                    // metrics are exposed via prometheus-net instead of the OTLP Prometheus exporter
             });
 
         return builder;
@@ -40,9 +79,12 @@ public static class OpenTelemetryExtensions
     private static ResourceBuilder CreateResourceBuilder(IHostEnvironment environment)
     {
         return ResourceBuilder.CreateDefault()
-            .AddService("TransactionAggregatorApi")
-            .AddAttributes([
-                new KeyValuePair<string, object>("development.environment", environment.EnvironmentName)
-            ]);
+            .AddService("TransactionAggregatorApi", serviceVersion: "1.0.0")
+            .AddTelemetrySdk()
+            .AddAttributes(new[] {
+                new KeyValuePair<string, object>("environment", environment.EnvironmentName),
+                new KeyValuePair<string, object>("application.name", "Transaction.Aggregator.Api"),
+                new KeyValuePair<string, object>("service.namespace", "aggregator")
+            });
     }
 }
