@@ -221,9 +221,6 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      jaeger:
-        condition: service_healthy
-
   transaction-simulator:
     build:
       context: ./TransactionSource.Simulator
