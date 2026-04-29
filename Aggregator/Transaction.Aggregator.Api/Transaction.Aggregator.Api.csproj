@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Shared.Core/Shared.Core.csproj" />
     <ProjectReference Include="../Transaction.Aggregator.Infrastructure/Transaction.Aggregator.Infrastructure.csproj" />
   </ItemGroup>
 

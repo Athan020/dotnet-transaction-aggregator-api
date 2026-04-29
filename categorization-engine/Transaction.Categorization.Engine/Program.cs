@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Shared.Core.Observability;
 using Shared.Entities;
 using Transaction.Categorization.Engine.Services;
 
@@ -10,6 +11,8 @@ builder.Services.AddGrpc(options =>
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
     options.MaxReceiveMessageSize = 5 * 1024 * 1024; // 5 MB
 });
+
+builder.AddObservability(builder.Configuration);
 
 builder.Services.AddDbContext<TransactionsContext>(options =>
 {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
+using Shared.Core.Observability;
 using Shared.Entities;
 using Transaction.Aggregator.Api.Extensions;
 using Transaction.Aggregator.Api.Middleware;
@@ -26,6 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddScoped<ITransactionSource, DatabaseTransactionsSource>();
     builder.Services.AddScoped<ITransactionManager, TransactionManager>();
 
+    builder.AddObservability(builder.Configuration);
 
     // builder.Services.Decorate<ITransactionAggregator,CategorizationAggregator>();
     builder.Services.AddDbContext<TransactionsContext>(options =>
@@ -81,6 +83,8 @@ var app = builder.Build();
     app.UseExceptionHandler();
 
     app.MapControllers();
+
+    app.MapPrometheusScrapingEndpoint();
 
     app.MapHealthChecks("/health", new HealthCheckOptions
     {

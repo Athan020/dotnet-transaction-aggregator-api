@@ -10,6 +10,7 @@ COPY Aggregator/Transaction.Aggregator.Domain/Transaction.Aggregator.Domain.cspr
 COPY Aggregator/Transaction.Aggregator.Infrastructure/Transaction.Aggregator.Infrastructure.csproj ./Aggregator/Transaction.Aggregator.Infrastructure/
 COPY Aggregator/Transaction.Aggregator.Tests/Transaction.Aggregator.Tests.csproj ./Aggregator/Transaction.Aggregator.Tests/
 COPY Shared.Entities/Shared.Entities.csproj ./Shared.Entities/
+COPY Shared.Core/Shared.Core.csproj ./Shared.Core/
 RUN dotnet restore Aggregator/Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj
 
 COPY Aggregator/Transaction.Aggregator.Api ./Aggregator/Transaction.Aggregator.Api/
@@ -18,6 +19,7 @@ COPY Aggregator/Transaction.Aggregator.Domain ./Aggregator/Transaction.Aggregato
 COPY Aggregator/Transaction.Aggregator.Infrastructure ./Aggregator/Transaction.Aggregator.Infrastructure/
 COPY Aggregator/Transaction.Aggregator.Tests ./Aggregator/Transaction.Aggregator.Tests/
 COPY Shared.Entities ./Shared.Entities/
+COPY Shared.Core ./Shared.Core/
 
 RUN dotnet publish -c Release -o /app/publish Aggregator/Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj
 

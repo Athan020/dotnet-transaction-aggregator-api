@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Shared.Core/Shared.Core.csproj" />
     <ProjectReference Include="../../Shared.Entities/Shared.Entities.csproj" />
     <ProjectReference Include="../../Shared.Protos/Shared.Protos.csproj" />
   </ItemGroup>

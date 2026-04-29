@@ -7,12 +7,14 @@ WORKDIR /app
 COPY categorization-engine/Transaction.Categorization.Engine/Transaction.Categorization.Engine.csproj ./categorization-engine/Transaction.Categorization.Engine/
 COPY Shared.Protos/Shared.Protos.csproj ./Shared.Protos/
 COPY Shared.Entities/Shared.Entities.csproj ./Shared.Entities/
+COPY Shared.Core/Shared.Core.csproj ./Shared.Core/
 
 RUN dotnet restore categorization-engine/Transaction.Categorization.Engine/Transaction.Categorization.Engine.csproj
 
 COPY categorization-engine/ categorization-engine/
 COPY Shared.Protos/ Shared.Protos/
 COPY Shared.Entities/ Shared.Entities/
+COPY Shared.Core/ Shared.Core/
 
 RUN dotnet publish -c Release -o /app/publish categorization-engine/Transaction.Categorization.Engine/Transaction.Categorization.Engine.csproj
 
