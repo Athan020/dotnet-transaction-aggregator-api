@@ -17,6 +17,7 @@ message CategorizeTransactionRequest {
 message CategorizeTransactionResponse {
   string transaction_id = 1;
   string category = 2;
+  string category_id = 3;
 }
 
 message CategorizeTransactionsBatchRequest {

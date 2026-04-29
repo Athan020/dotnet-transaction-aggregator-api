@@ -5,28 +5,32 @@ using Transaction.Aggregator.Domain.Models;
 
 namespace Transaction.Aggregator.Application;
 
-public class TransactionManager(ITransactionAggregator transactionAggregator, ILogger<TransactionManager> logger) : ITransactionManager
+public class TransactionManager(ITransactionSource transactionAggregator, ILogger<TransactionManager> logger) : ITransactionManager
 {
-    private readonly ITransactionAggregator _transactionAggregator = transactionAggregator;
+    private readonly ITransactionSource _transactionAggregator = transactionAggregator;
     private readonly ILogger<TransactionManager> _logger = logger;
 
     public async Task<PaginatedResult<TransactionItem>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting transaction aggregation for AccountId: {AccountId}, PageNumber: {PageNumber}, PageSize: {PageSize}", query.AccountId, query.PageNumber, query.PageSize);
 
-        var aggregatedTransactions = await _transactionAggregator.AggregateTransactionsAsync(query, cancellationToken);
+        var aggregatedTransactions = await _transactionAggregator.GetTransactionsAsync(query, cancellationToken);
 
-        var result = aggregatedTransactions?
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToArray() ?? [];
-
-        _logger.LogInformation("Completed transaction aggregation for AccountId: {AccountId}. Total Transactions: {TotalCount}, Returned Transactions: {ReturnedCount}", query.AccountId, aggregatedTransactions?.Count ?? 0, result.Length);
-        
+        if(!aggregatedTransactions.IsSuccess)
+        {
+            _logger.LogError("Failed to aggregate transactions for AccountId: {AccountId}. Error: {ErrorMessage}", query.AccountId, aggregatedTransactions.Error);
+            return new PaginatedResult<TransactionItem>
+            {
+                Items = [],
+                TotalCount = 0,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize
+            };
+        }
         return new PaginatedResult<TransactionItem>
         {
-            Items = result,
-            TotalCount = aggregatedTransactions?.Count ?? 0,
+            Items = aggregatedTransactions.Value!,
+            TotalCount = aggregatedTransactions.Value?.Length ?? 0,
             PageNumber = query.PageNumber,
             PageSize = query.PageSize
         };

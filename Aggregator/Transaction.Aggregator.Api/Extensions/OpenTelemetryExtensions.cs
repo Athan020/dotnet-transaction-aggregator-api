@@ -1,48 +1,48 @@
-using System;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+// using System;
+// using OpenTelemetry.Logs;
+// using OpenTelemetry.Metrics;
+// using OpenTelemetry.Resources;
+// using OpenTelemetry.Trace;
 
-namespace Transaction.Aggregator.Api.Extensions;
+// namespace Transaction.Aggregator.Api.Extensions;
 
-public static class OpenTelemetryExtensions
-{
+// public static class OpenTelemetryExtensions
+// {
 
-    public static TBuilder AddOpenTelemetry<TBuilder>(this TBuilder builder)
-        where TBuilder : IHostApplicationBuilder
-    {
+//     public static TBuilder AddOpenTelemetry<TBuilder>(this TBuilder builder)
+//         where TBuilder : IHostApplicationBuilder
+//     {
 
-        builder.Logging.AddOpenTelemetry(options =>
-        {
-            options
-                .AddConsoleExporter();
+//         builder.Logging.AddOpenTelemetry(options =>
+//         {
+//             options
+//                 .AddConsoleExporter();
 
-            options.IncludeFormattedMessage = true;
-            options.IncludeScopes = true;
+//             options.IncludeFormattedMessage = true;
+//             options.IncludeScopes = true;
 
-            options.SetResourceBuilder(CreateResourceBuilder(builder.Environment));
-        });
+//             options.SetResourceBuilder(CreateResourceBuilder(builder.Environment));
+//         });
 
-        builder.Services.AddOpenTelemetry()
-            .WithMetrics(options =>
-            {
-                options
-                    .SetResourceBuilder(CreateResourceBuilder(builder.Environment))
-                    .AddAspNetCoreInstrumentation()
-                    .AddConsoleExporter();
-            });
+//         builder.Services.AddOpenTelemetry()
+//             .WithMetrics(options =>
+//             {
+//                 options
+//                     .SetResourceBuilder(CreateResourceBuilder(builder.Environment))
+//                     .AddAspNetCoreInstrumentation()
+//                     .AddConsoleExporter();
+//             });
 
-        return builder;
-    }
+//         return builder;
+//     }
 
 
-    private static ResourceBuilder CreateResourceBuilder(IHostEnvironment environment)
-    {
-        return ResourceBuilder.CreateDefault()
-            .AddService("TransactionAggregatorApi")
-            .AddAttributes([
-                new KeyValuePair<string, object>("development.environment", environment.EnvironmentName)
-            ]);
-    }
-}
+//     private static ResourceBuilder CreateResourceBuilder(IHostEnvironment environment)
+//     {
+//         return ResourceBuilder.CreateDefault()
+//             .AddService("TransactionAggregatorApi")
+//             .AddAttributes([
+//                 new KeyValuePair<string, object>("development.environment", environment.EnvironmentName)
+//             ]);
+//     }
+// }

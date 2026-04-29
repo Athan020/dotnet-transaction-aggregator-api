@@ -17,5 +17,7 @@ public record class TransactionItem
 
     public string Category { get; set; } = null!;
 
+    public string SubCategory { get; set; } = null!;
+
     public string Source { get; set; }= null!;
 }

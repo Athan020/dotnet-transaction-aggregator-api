@@ -13,6 +13,8 @@ public sealed record TransactionQueryDto
 
     [Range(1, 100, ErrorMessage = "PageSize must be greater than 0 and less than or equal to 100.")]
     public int PageSize { get; init; } = 20;
+
+    public DateTimeOffset FromDate { get; init; } = DateTimeOffset.UtcNow.AddMonths(-3);
 }
 
 
@@ -26,7 +28,8 @@ public static class TransactionQueryDtoExtensions
             {
                 SourceName = transactionQueryDto.SourceName,
                 PageNumber = transactionQueryDto.PageNumber,
-                PageSize = transactionQueryDto.PageSize
+                PageSize = transactionQueryDto.PageSize,
+                FromDate = transactionQueryDto.FromDate
             };
         }
     }

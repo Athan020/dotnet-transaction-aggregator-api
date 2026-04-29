@@ -14,9 +14,11 @@
   <ItemGroup>
     <Folder Include="Extensions/" />
     <Folder Include="SourceAdapters/" />
+    <Folder Include="Workers/" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Shared.Entities/Shared.Entities.csproj" />
     <ProjectReference Include="../../Shared.Protos/Shared.Protos.csproj" />
   </ItemGroup>
 

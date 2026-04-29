@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
+using Shared.Entities;
 using Transaction.Aggregator.Api.Extensions;
 using Transaction.Aggregator.Api.Middleware;
 using Transaction.Aggregator.Application;
@@ -8,7 +10,6 @@ using Transaction.Aggregator.Application.Configuration;
 using Transaction.Aggregator.Application.Contracts;
 using Transaction.Aggregator.Domain.Models;
 using Transaction.Aggregator.Infrastructure;
-using Transaction.Aggregator.Infrastructure.RuleEngine;
 using Transaction.Aggregator.Infrastructure.Sources;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,22 +23,24 @@ var builder = WebApplication.CreateBuilder(args);
     builder.AddDistributedCache();
 
     // Add services to the container.
-    builder.Services.AddSingleton<IResiliencePipelineFactory, ResiliencePipelineFactory>();
-    builder.Services.AddScoped<ITransactionManager,TransactionManager>();
-    builder.Services.AddScoped<ITransactionSource,RewardTransactionSource>();
-    builder.Services.AddScoped<ITransactionSource,PrepaidTransactionSource>();
-    builder.Services.AddScoped<ITransactionSource,CardTransactionSource>();
-
-    builder.Services.Decorate<ITransactionSource,ResilientTransactionSource>();
-    builder.Services.Decorate<ITransactionSource,CachedTransactionSource>();
-
-    
-    builder.Services.AddScoped<ICategorizerEngine, CustomRuleCategorizer>();
-
-    builder.Services.AddScoped<ITransactionAggregator,TransactionAggregator>();
+    builder.Services.AddScoped<ITransactionSource, DatabaseTransactionsSource>();
+    builder.Services.AddScoped<ITransactionManager, TransactionManager>();
 
 
-    builder.Services.Decorate<ITransactionAggregator,CategorizationAggregator>();
+    // builder.Services.Decorate<ITransactionAggregator,CategorizationAggregator>();
+    builder.Services.AddDbContext<TransactionsContext>(options =>
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"), providerOptions =>
+        {
+            providerOptions.EnableRetryOnFailure();
+            providerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        } );
+
+        options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+        options.EnableDetailedErrors(builder.Environment.IsDevelopment());
+        options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+
+    });
 
     builder.Services.AddControllers()
         .AddJsonOptions(options =>
@@ -48,7 +51,6 @@ var builder = WebApplication.CreateBuilder(args);
     // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
     builder.Services.AddOpenApi();
 
-    builder.AddOpenTelemetry();
     builder.AddCustomRateLimiting();
     builder.AddCustomHealthChecks();
 

@@ -10,7 +10,7 @@ public static class HealthCheckExtensions
     {
         builder.Services
             .AddHealthChecks()
-            .AddRedis(builder.Configuration.GetConnectionString("Redis")!)
+            .AddNpgSql(builder.Configuration.GetConnectionString("Postgres")!, tags: ["ready"])
             .AddCheck("self", () => HealthCheckResult.Healthy("API is Available"),
                 tags: ["ready"]);
 

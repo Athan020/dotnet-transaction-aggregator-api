@@ -4,17 +4,22 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /app
 
-COPY EnterpriseTransactionAggregator.sln .
-COPY Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj ./Transaction.Aggregator.Api/
-COPY Transaction.Aggregator.Application/Transaction.Aggregator.Application.csproj ./Transaction.Aggregator.Application/
-COPY Transaction.Aggregator.Domain/Transaction.Aggregator.Domain.csproj ./Transaction.Aggregator.Domain/
-COPY Transaction.Aggregator.Infrastructure/Transaction.Aggregator.Infrastructure.csproj ./Transaction.Aggregator.Infrastructure/
-COPY Transaction.Aggregator.Tests/Transaction.Aggregator.Tests.csproj ./Transaction.Aggregator.Tests/
-RUN dotnet restore 
+COPY Aggregator/Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj ./Aggregator/Transaction.Aggregator.Api/
+COPY Aggregator/Transaction.Aggregator.Application/Transaction.Aggregator.Application.csproj ./Aggregator/Transaction.Aggregator.Application/
+COPY Aggregator/Transaction.Aggregator.Domain/Transaction.Aggregator.Domain.csproj ./Aggregator/Transaction.Aggregator.Domain/
+COPY Aggregator/Transaction.Aggregator.Infrastructure/Transaction.Aggregator.Infrastructure.csproj ./Aggregator/Transaction.Aggregator.Infrastructure/
+COPY Aggregator/Transaction.Aggregator.Tests/Transaction.Aggregator.Tests.csproj ./Aggregator/Transaction.Aggregator.Tests/
+COPY Shared.Entities/Shared.Entities.csproj ./Shared.Entities/
+RUN dotnet restore Aggregator/Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj
 
-COPY . .
+COPY Aggregator/Transaction.Aggregator.Api ./Aggregator/Transaction.Aggregator.Api/
+COPY Aggregator/Transaction.Aggregator.Application ./Aggregator/Transaction.Aggregator.Application/
+COPY Aggregator/Transaction.Aggregator.Domain ./Aggregator/Transaction.Aggregator.Domain/
+COPY Aggregator/Transaction.Aggregator.Infrastructure ./Aggregator/Transaction.Aggregator.Infrastructure/
+COPY Aggregator/Transaction.Aggregator.Tests ./Aggregator/Transaction.Aggregator.Tests/
+COPY Shared.Entities ./Shared.Entities/
 
-RUN dotnet publish -c Release -o /app/publish Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj
+RUN dotnet publish -c Release -o /app/publish Aggregator/Transaction.Aggregator.Api/Transaction.Aggregator.Api.csproj
 
 
 # Create Runtime Image

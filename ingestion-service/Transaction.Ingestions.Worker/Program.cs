@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using Shared.Entities;
 using Transaction.Ingestions.Worker.Extensions;
+using Transaction.Ingestions.Worker.SourceAdapters;
+using Transaction.Ingestions.Worker.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +13,13 @@ builder.Services.AddOpenApi();
 
 builder.Services.ConfigureGrpcClient(builder.Configuration);
 
+builder.Services.AddScoped<ISourceAdapter, MockSourceAdapter>();
 
+builder.Services.AddHostedService<CategorizationWorker>();
+builder.Services.AddHostedService<IngestionWorker>();
+
+builder.Services.AddDbContext<TransactionsContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 var app = builder.Build();
 

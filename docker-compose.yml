@@ -8,9 +8,12 @@ services:
       context: .
       dockerfile: ./ingestion-service/Dockerfile
     ports:
-      - "5100:5000"
+      - "5100:80"
+    env_file:
+      - local.env
+      - ./.env
     environment:
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__Postgres=Host=transactions-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
@@ -20,22 +23,29 @@ services:
       context: .
       dockerfile: ./categorization-engine/Dockerfile
     ports:
-      - "5212:5000"
-    
+      - "5212:80"
+    env_file:
+      - local.env
+      - ./.env
     environment:
-      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__Postgres=Host=transactions-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
-  # transaction-aggregator-api:
-  #   build: ./Aggregator
-  #   ports:
-  #     - "5050:80"
-  #   environment:
-  #     - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-  #   depends_on:
-  #     ingestion-service:
-  #       condition: service_healthy
+  transaction-aggregator-api:
+    build: 
+      context: .
+      dockerfile: ./Aggregator/Dockerfile
+    ports:
+      - "5050:80"
+    env_file:
+      - local.env
+      - ./.env
+    environment:
+      - ConnectionStrings__Postgres=Host=transactions-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 
 

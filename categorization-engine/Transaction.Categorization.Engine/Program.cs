@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Shared.Entities;
 using Transaction.Categorization.Engine.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,15 +11,26 @@ builder.Services.AddGrpc(options =>
     options.MaxReceiveMessageSize = 5 * 1024 * 1024; // 5 MB
 });
 
+builder.Services.AddDbContext<TransactionsContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"), providerOptions =>
+    {
+        providerOptions.EnableRetryOnFailure();
+        providerOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    });
+
+    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+    options.EnableDetailedErrors(builder.Environment.IsDevelopment());
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+
+});
+
 builder.Services.AddGrpcReflection();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<CategorizationService>();
-
-app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-
 
 if (app.Environment.IsDevelopment())
 {
