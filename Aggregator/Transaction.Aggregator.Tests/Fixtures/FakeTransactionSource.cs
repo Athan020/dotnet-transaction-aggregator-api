@@ -8,14 +8,20 @@ public class FakeTransactionSource(string name, IReadOnlyList<TransactionItem> t
 {
     public string SourceName => name;
 
-    public ValueTask<Result<TransactionItem[]>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken)
+    public ValueTask<Result<PaginatedResult<TransactionItem>>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken)
     {
         if (exception != null)
         {
             throw new Exception($"Error fetching transactions from {SourceName} source", exception);
         }
 
-        return new ValueTask<Result<TransactionItem[]>>(Result<TransactionItem[]>.Success(transactions.ToArray()));
+        return new ValueTask<Result<PaginatedResult<TransactionItem>>>(Result<PaginatedResult<TransactionItem>>.Success(new PaginatedResult<TransactionItem>
+        {
+            Items = [.. transactions],
+            TotalCount = transactions.Count,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
+        }));
     }
 
     public static FakeTransactionSource Create(string name, IReadOnlyList<TransactionItem> transactions, Exception? exception = null)

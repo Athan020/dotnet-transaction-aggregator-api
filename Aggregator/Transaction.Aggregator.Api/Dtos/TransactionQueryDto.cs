@@ -31,7 +31,8 @@ public static class TransactionQueryDtoExtensions
                 SourceName = transactionQueryDto.SourceName,
                 PageNumber = transactionQueryDto.PageNumber,
                 PageSize = transactionQueryDto.PageSize,
-                FromDate = transactionQueryDto.FromDate
+                FromDate = transactionQueryDto.FromDate,
+                ToDate = transactionQueryDto.ToDate
             };
         }
     }

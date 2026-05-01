@@ -13,7 +13,7 @@ public sealed class DatabaseTransactionsSource(TransactionsContext transactionsC
 
     private readonly TransactionsContext _transactionsContext = transactionsContext;
     private readonly ILogger<DatabaseTransactionsSource> _logger = logger;
-    public async ValueTask<Result<TransactionItem[]>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken)
+    public async ValueTask<Result<PaginatedResult<TransactionItem>>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken)
     {
 
         _logger.LogInformation("Retrieving transactions for {SourceName} from Database for AccountId : {AccountId}", SourceName ?? "All Sources", query.AccountId);
@@ -46,9 +46,12 @@ public sealed class DatabaseTransactionsSource(TransactionsContext transactionsC
 
         _logger.LogInformation("Retrieved {Count} transactions for {SourceName} from Database for AccountId : {AccountId}", transactionItems.Length, SourceName ?? "All Sources", query.AccountId);
 
-        return Result<TransactionItem[]>.Success(transactionItems, new Dictionary<string, object>
+        return Result<PaginatedResult<TransactionItem>>.Success(new PaginatedResult<TransactionItem>
         {
-            { "TotalCount", totalCount }
+            Items = transactionItems,
+            TotalCount = totalCount,
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize
         });
     }
 }

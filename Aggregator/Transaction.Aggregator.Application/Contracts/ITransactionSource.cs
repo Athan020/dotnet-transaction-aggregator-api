@@ -7,5 +7,5 @@ public interface ITransactionSource
 {
     string SourceName { get; }
 
-    ValueTask<Result<TransactionItem[]>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken);
+    ValueTask<Result<PaginatedResult<TransactionItem>>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken);
 }

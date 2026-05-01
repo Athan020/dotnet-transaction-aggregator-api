@@ -27,10 +27,11 @@ public class TransactionManager(ITransactionSource transactionAggregator, ILogge
                 PageSize = query.PageSize
             };
         }
-        return new PaginatedResult<TransactionItem>
+
+        return aggregatedTransactions.Value ?? new PaginatedResult<TransactionItem>
         {
-            Items = aggregatedTransactions.Value!,
-            TotalCount = aggregatedTransactions.Metadata.GetValueOrDefault("TotalCount", 0)  is int totalCount ? totalCount : 0,
+            Items = [],
+            TotalCount = 0,
             PageNumber = query.PageNumber,
             PageSize = query.PageSize
         };
