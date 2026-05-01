@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package categorization;
+
+service Categorization {
+  rpc CategorizeTransaction(CategorizeTransactionRequest) returns (CategorizeTransactionResponse);
+
+  rpc CategorizeTransactionsBatch(CategorizeTransactionsBatchRequest) returns (CategorizeTransactionsBatchResponse);
+}
+
+message CategorizeTransactionRequest {
+  string transaction_id = 1;
+  double amount = 2;
+  string description = 3;
+}
+
+message CategorizeTransactionResponse {
+  string transaction_id = 1;
+  string category = 2;
+  string category_id = 3;
+}
+
+message CategorizeTransactionsBatchRequest {
+  repeated CategorizeTransactionRequest requests = 1;
+}
+
+message CategorizeTransactionsBatchResponse {
+  repeated CategorizeTransactionResponse responses = 1;
+}

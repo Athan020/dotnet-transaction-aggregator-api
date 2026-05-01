@@ -1,27 +1,55 @@
+
+include:
+  - infra-compose.yml
+
 services:
+  ingestion-service:
+    build: 
+      context: .
+      dockerfile: ./ingestion-service/Dockerfile
+    ports:
+      - "5100:80"
+    env_file:
+      - local.env
+      - ./.env
+    environment:
+      - ConnectionStrings__Postgres=Host=transactions-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  categorization-engine:
+    build:
+      context: .
+      dockerfile: ./categorization-engine/Dockerfile
+    ports:
+      - "5212:80"
+    env_file:
+      - local.env
+      - ./.env
+    environment:
+      - ConnectionStrings__Postgres=Host=transactions-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
   transaction-aggregator-api:
-    build: .
+    build: 
+      context: .
+      dockerfile: ./Aggregator/Dockerfile
     ports:
       - "5050:80"
+    env_file:
+      - local.env
+      - ./.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
-      - ConnectionStrings__Redis=redis:6379
+      - ConnectionStrings__Postgres=Host=transactions-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
-      redis:
+      postgres:
         condition: service_healthy
-  redis:
-    image: redis:8-alpine
-    ports:
-      - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-volumes:
-  redis-data:
+
+
+networks:
+  default:
+    name: aggregator-network
+    driver: bridge

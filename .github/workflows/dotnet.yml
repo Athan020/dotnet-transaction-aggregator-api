@@ -1,0 +1,33 @@
+name: Build & Test .NET 10 Web API
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore EnterpriseTransactionAggregator.sln
+
+      - name: Build solution
+        run: dotnet build EnterpriseTransactionAggregator.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test EnterpriseTransactionAggregator.sln --configuration Release --no-restore --verbosity minimal
