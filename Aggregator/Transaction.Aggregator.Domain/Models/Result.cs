@@ -8,8 +8,10 @@ public record class Result<T>
     public ErrorDetail? Error { get; init; }
     public bool IsSuccess => Error == null;
 
-    public static Result<T> Success(T value) => new (){ Value = value };
+    public static Result<T> Success(T value, Dictionary<string, object> metadata = default!) => new (){ Value = value, Metadata = metadata ?? [] };
     public static Result<T> Failure(ErrorDetail error) => new() { Error = error };
+
+    public Dictionary<string, object> Metadata { get; init; } = [];
 }
 
 

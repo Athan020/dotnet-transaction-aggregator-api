@@ -15,6 +15,8 @@ public sealed record TransactionQueryDto
     public int PageSize { get; init; } = 20;
 
     public DateTimeOffset FromDate { get; init; } = DateTimeOffset.UtcNow.AddMonths(-3);
+
+    public DateTimeOffset ToDate { get; init; } = DateTimeOffset.UtcNow;
 }
 
 

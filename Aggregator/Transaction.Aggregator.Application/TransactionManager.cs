@@ -30,7 +30,7 @@ public class TransactionManager(ITransactionSource transactionAggregator, ILogge
         return new PaginatedResult<TransactionItem>
         {
             Items = aggregatedTransactions.Value!,
-            TotalCount = aggregatedTransactions.Value?.Length ?? 0,
+            TotalCount = aggregatedTransactions.Metadata.GetValueOrDefault("TotalCount", 0)  is int totalCount ? totalCount : 0,
             PageNumber = query.PageNumber,
             PageSize = query.PageSize
         };

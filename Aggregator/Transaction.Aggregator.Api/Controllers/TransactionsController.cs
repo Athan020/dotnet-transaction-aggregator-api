@@ -24,6 +24,37 @@ namespace Transaction.Aggregator.Api.Controllers
         {
             var queryModel = query.ToTransactionQueryDomainModel();
 
+            if(queryModel.FromDate > queryModel.ToDate)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid date range",
+                    Detail = "FromDate cannot be greater than ToDate.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            if(queryModel.FromDate < DateTimeOffset.UtcNow.AddYears(-1))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid FromDate",
+                    Detail = "FromDate cannot be older than 1 year from the current date.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            if(queryModel.ToDate > DateTimeOffset.UtcNow)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid ToDate",
+                    Detail = "ToDate cannot be in the future.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+
             queryModel = queryModel with { AccountId = accountId };
 
             var transactions = await _transactionAggregator.GetTransactionsAsync(queryModel, cancellationToken);

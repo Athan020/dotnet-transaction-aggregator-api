@@ -20,4 +20,6 @@ public record class TransactionItem
     public string SubCategory { get; set; } = null!;
 
     public string Source { get; set; }= null!;
+
+    public string Currency { get; set; } = null!;
 }

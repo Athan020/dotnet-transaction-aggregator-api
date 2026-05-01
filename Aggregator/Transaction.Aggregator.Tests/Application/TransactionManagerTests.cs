@@ -13,15 +13,17 @@ public class TransactionManagerTests
     [Fact]
     public async Task Should_GetTransactionsAsync_Return_Aggregated_Transactions()
     {
-        var transactions = new List<TransactionItem>
-        {
+        TransactionItem[] transactions =
+        [
             TransactionFixtures.Salary(),
             TransactionFixtures.Grocery(),
             TransactionFixtures.OnlineSubscription()
-        };
+        ];
 
-        Mock<ITransactionAggregator> transactionAggregatorMock = new();
-        transactionAggregatorMock.Setup(a => a.AggregateTransactionsAsync(It.IsAny<TransactionQuery>(), It.IsAny<CancellationToken>())).ReturnsAsync(transactions);
+        Mock<ITransactionSource> transactionAggregatorMock = new();
+        transactionAggregatorMock
+            .Setup(a => a.GetTransactionsAsync(It.IsAny<TransactionQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<TransactionItem[]>.Success(transactions));
 
         var transactionManager = new TransactionManager(transactionAggregatorMock.Object, NullLogger<TransactionManager>.Instance);
 
@@ -34,6 +36,6 @@ public class TransactionManagerTests
         Assert.Equal(query.PageNumber, result.PageNumber);
         Assert.Equal(query.PageSize, result.PageSize);
         
-        transactionAggregatorMock.Verify(a => a.AggregateTransactionsAsync(It.IsAny<TransactionQuery>(), It.IsAny<CancellationToken>()), Times.Once);
+        transactionAggregatorMock.Verify(a => a.GetTransactionsAsync(It.IsAny<TransactionQuery>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -16,10 +16,19 @@ public sealed class DatabaseTransactionsSource(TransactionsContext transactionsC
     public async ValueTask<Result<TransactionItem[]>> GetTransactionsAsync(TransactionQuery query, CancellationToken cancellationToken)
     {
 
-        _logger.LogInformation("Retrieving transactions for {SourceName} from Database for AccountId : {AccountId}", SourceName, query.AccountId);
+        _logger.LogInformation("Retrieving transactions for {SourceName} from Database for AccountId : {AccountId}", SourceName ?? "All Sources", query.AccountId);
 
-        var transactions = await _transactionsContext.Transactions
-            .Where(trx => trx.AccountId == query.AccountId && trx.TransactionDate >= query.FromDate && trx.TransactionDate <= query.ToDate)
+        var transactions =  _transactionsContext.Transactions
+            .Where(trx => trx.AccountId == query.AccountId && trx.TransactionDate >= query.FromDate && trx.TransactionDate <= query.ToDate);
+
+        if(query.SourceName is not null)
+        {
+            transactions = transactions.Where(trx => trx.Source!.Name == query.SourceName);
+        }
+
+        var totalCount = await transactions.CountAsync(cancellationToken);
+            
+        var transactionItems = await transactions
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(trx => new TransactionItem
@@ -31,11 +40,15 @@ public sealed class DatabaseTransactionsSource(TransactionsContext transactionsC
                 Description = trx.Description!,
                 Category = trx.Category!.Name,
                 SubCategory = trx.Category.SubcategoryOfNavigation != null ? trx.Category.SubcategoryOfNavigation.Name : string.Empty,
-                Source = trx.Source!.Name
+                Source = trx.Source!.Name,
+                Currency = trx.Currency
             }).ToArrayAsync(cancellationToken);
 
-        _logger.LogInformation("Retrieved {Count} transactions for {SourceName} from Database for AccountId : {AccountId}", transactions.Length, SourceName, query.AccountId);
+        _logger.LogInformation("Retrieved {Count} transactions for {SourceName} from Database for AccountId : {AccountId}", transactionItems.Length, SourceName ?? "All Sources", query.AccountId);
 
-        return Result<TransactionItem[]>.Success(transactions);
+        return Result<TransactionItem[]>.Success(transactionItems, new Dictionary<string, object>
+        {
+            { "TotalCount", totalCount }
+        });
     }
 }
