@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS transactions.sources (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
     last_synced TIMESTAMPTZ,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

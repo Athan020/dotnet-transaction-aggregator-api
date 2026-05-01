@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore;
 using Shared.Entities;
 using Transaction.Ingestions.Worker.SourceAdapters;
 
@@ -24,6 +25,12 @@ public sealed class IngestionWorker(IServiceScopeFactory serviceScopeFactory, IL
                 var sourceAdapters = scope.ServiceProvider.GetServices<ISourceAdapter>();
                 var transactionContext = scope.ServiceProvider.GetRequiredService<TransactionsContext>();
 
+                if(sourceAdapters == null || !sourceAdapters.Any())
+                {
+                    _logger.LogWarning("No source adapters found. Skipping this cycle.");
+                    continue;
+                }
+
                 foreach (var adapter in sourceAdapters)
                 {
                     _logger.LogInformation("Fetching transactions from source: {SourceName}", adapter.SourceName);
@@ -47,15 +54,26 @@ public sealed class IngestionWorker(IServiceScopeFactory serviceScopeFactory, IL
                         source.LastSynced = DateTime.UtcNow.AddDays(-90);
                     }
 
-
+                    List<Shared.Entities.Transaction> transactions = [];
                     await foreach (var transaction in adapter.FetchTransactionsAsync(source.LastSynced.Value, stoppingToken))
                     {
                         transaction.Source = source;
                         transaction.CategoryId = null;
                         transaction.Category = null;
 
-                        transactionContext.Transactions.Add(transaction);
+                        transactions.Add(transaction);
                     }
+
+                    await transactionContext.Transactions
+                        .UpsertRange(transactions)
+                        .On(t => new { t.SourceId, t.ExternalId })
+                        .WhenMatched((existing, incoming) => new Shared.Entities.Transaction
+                        {
+                            CategoryId = existing.CategoryId,
+                            Category = existing.Category,
+                            UpdatedAt = DateTime.UtcNow
+                        })
+                        .RunAsync(stoppingToken);
 
                     await transactionContext.SaveChangesAsync(stoppingToken);
                 }
