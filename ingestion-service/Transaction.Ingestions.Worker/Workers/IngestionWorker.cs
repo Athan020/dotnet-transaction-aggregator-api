@@ -74,7 +74,7 @@ public sealed class IngestionWorker(IServiceScopeFactory serviceScopeFactory, IL
                             UpdatedAt = DateTime.UtcNow
                         })
                         .RunAsync(stoppingToken);
-
+                    source.LastSynced = DateTime.UtcNow;
                     await transactionContext.SaveChangesAsync(stoppingToken);
                 }
             }
